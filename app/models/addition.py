@@ -12,6 +12,6 @@ class Addition(Resource):
             a = float(args["a"])
             b = float(args["b"])
         except Exception as error_msg:
-            return str(error_msg)
+            return str(error_msg), 200
         else:
-            return a + b
+            return a + b, 200

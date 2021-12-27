@@ -16,6 +16,6 @@ class Division(Resource):
             try:
                 res = a / b
             except Exception as error_msg:
-                return str(error_msg)
+                return str(error_msg), 200
             else:
-                return res
+                return res, 200

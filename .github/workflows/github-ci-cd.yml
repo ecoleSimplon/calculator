@@ -1,0 +1,54 @@
+name: Integration and Deployment
+on: push
+jobs:
+    build:
+      name: build
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v2
+        - run: |
+            echo "
+            ASP_NAME=${{ secrets.ASP_NAME }}
+            RG_NAME=${{ secrets.RG_NAME }}
+            AZURE_WEB_APP_NAME=${{ secrets.AZURE_WEB_APP_NAME }}
+            SKU=${{ secrets.SKU }}
+            SCM_DO_BUILD_DURING_DEPLOYMENT=${{ secrets.SCM_DO_BUILD_DURING_DEPLOYMENT }}
+            " >> .env
+        - uses: actions/upload-artifact@v2
+          with: 
+            name: .env
+            path: ./.env
+
+    testing:  
+      name: Tests
+      needs: build
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v2
+        - run: |
+            pip3 install -r requirements.txt
+            uwsgi app.ini &
+            python3 tests/api_response.py http://localhost:5000
+      
+    update:
+      name: Update
+      needs: testing
+      runs-on: ubuntu-latest
+      env: 
+        UPDATE_ACTION: ${{ secrets.UPDATE_ACTION }}
+      steps:
+        - uses: actions/checkout@v2
+        - uses: actions/download-artifact@v2
+          with:
+            name: .env
+        - name: AZ login
+          run: az login -u ${{ secrets.AZ_USERNAME }} -p ${{ secrets.AZ_PASSWORD }}
+        - name: Deploy Web App
+          if: ${{ env.UPDATE_ACTION == 'deploy' }}  
+          run: ./webAppUpdate.sh ${{ env.UPDATE_ACTION }}
+        - name: Destroy Web App
+          if: ${{ env.UPDATE_ACTION == 'destroy' }}  
+          run: ./webAppUpdate.sh ${{ env.UPDATE_ACTION }}
+
+
+      

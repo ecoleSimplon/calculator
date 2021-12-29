@@ -1,17 +1,24 @@
-from os import pardir
 import unittest
-from unittest import result
 import requests
+import argparse
 
+
+def get_arg():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("url", help="url", nargs="+")
+    arg_url = parser.parse_args()
+    return arg_url
 
 class ApiResponse(unittest.TestCase):
 
     def __init__(self, *args, **kwargs):
         super(ApiResponse, self).__init__(*args, **kwargs)
-        self.url_addition = "http://localhost:5000/addition"
-        self.url_multiplication = "http://localhost:5000/multiplication"
-        self.url_division = "http://localhost:5000/division"
-        self.url_subtraction = "http://localhost:5000/subtraction"
+        self.base_url = get_arg().url[0]
+        self.url_addition = self.base_url + "/addition"
+        self.url_multiplication = self.base_url + "/multiplication"
+        self.url_division = self.base_url + "/division"
+        self.url_subtraction = self.base_url + "/subtraction"
+
 
     def test_status_code(self):
             payload = {"a": 1, "b": 2}
@@ -25,8 +32,6 @@ class ApiResponse(unittest.TestCase):
             self.assertEqual(response_multiplication.status_code, 200)
             self.assertEqual(response_division.status_code, 200)
             self.assertEqual(response_subtraction.status_code, 200)
-
-       
 
     def test_operation_result(self):
         payload = {"a": 1, "b": 0}
@@ -51,7 +56,8 @@ class ApiResponse(unittest.TestCase):
         result_addition = response_addition.json()
         self.assertEqual(result_addition, "could not convert string to float: 'z'")
 
-    
+
 
 if __name__ == '__main__':
-    unittest.main()
+    arg = get_arg()
+    unittest.main(argv=arg.url)
